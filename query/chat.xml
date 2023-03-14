@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="ChatGPT">
+
+    <insert id="insertLog" parameterType="chat">
+        INSERT INTO nb_chat_log (CHAT_MSG, DISCORD_ID, DISCORD_NAME, CREATE_DATE)
+        VALUES (#{chatMsg}, #{discordId}, #{discordName}, NOW());
+    </insert>
+
+    <insert id="insertHistory" parameterType="chat">
+        INSERT INTO nb_history (DISCORD_ID, PARENT_MESSAGE_ID, CREATE_DATE, DELETE_FLG)
+        VALUES (#{discordId}, #{parentMessageId}, NOW(), "N");
+    </insert>
+
+    <select id="selectHistory" parameterType="chat">
+        SELECT DISCORD_ID,
+               PARENT_MESSAGE_ID,
+               DELETE_FLG
+        FROM nb_history a
+        WHERE a.DISCORD_ID = #{discordId}
+          AND a.DELETE_FLG = 'N'
+    </select>
+
+    <update id="updateHistoryFlg" parameterType="chat">
+        UPDATE nb_history SET DELETE_FLG = 'Y' WHERE DISCORD_ID = #{discordId};
+    </update>
+
+    <select id="selectQueue" parameterType="chat">
+        SELECT
+        *
+        FROM
+        nb_queue q
+        WHERE
+        q.complete_flg = 'N'
+    </select>
+
+    <insert id="insertQueue" parameterType="chat">
+        INSERT INTO `nb_queue` (`discord_id`, `message`, `parent_message_id`, create_date)
+        VALUES (#{discordId}, #{chatMsg}, #{parentMessageId}, NOW());
+    </insert>
+
+    <update id="updateQueue" parameterType="chat">
+        UPDATE nb_queue SET complete_flg = 'Y' WHERE DISCORD_ID = #{discordId};
+    </update>
+</mapper>

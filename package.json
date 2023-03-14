@@ -1,0 +1,28 @@
+{
+  "name": "chatgptbot-js",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon --trace-deprecation --experimental-modules discord.mjs",
+    "dev": "nodemon --trace-deprecation --experimental-modules discord.mjs"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chatgpt": "^5.0.8",
+    "discord.js": "^13.13.1",
+    "dotenv": "^16.0.3",
+    "fs": "^0.0.1-security",
+    "log4js": "^6.8.0",
+    "logger": "^0.0.1",
+    "mybatis-mapper": "^0.6.8",
+    "mysql2": "^3.1.2",
+    "node-fetch": "^3.3.0",
+    "nodemon": "^2.0.20",
+    "ora": "^6.1.2",
+    "winston": "^3.8.2",
+    "xml-js": "^1.6.11"
+  }
+}

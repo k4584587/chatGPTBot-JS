@@ -1,0 +1,15 @@
+version: "3.2"
+
+services:
+
+  bot:
+    build: .
+    container_name: chatGPT-Bot
+    restart: always
+    environment:
+      - "DISCORD_BOT_TOKEN="
+      - "OPENAI_API_KEY="
+      - "DB_HOST="
+      - "DB_USER="
+      - "DB_PASSWORD="
+      - "DB_DATABASE="
