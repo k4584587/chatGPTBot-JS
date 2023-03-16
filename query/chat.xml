@@ -9,13 +9,14 @@
     </insert>
 
     <insert id="insertHistory" parameterType="chat">
-        INSERT INTO nb_history (DISCORD_ID, PARENT_MESSAGE_ID, CREATE_DATE, DELETE_FLG)
-        VALUES (#{discordId}, #{parentMessageId}, NOW(), "N");
+        INSERT INTO nb_history (DISCORD_ID, PARENT_MESSAGE_ID, CONVERSATION_ID, CREATE_DATE, DELETE_FLG)
+        VALUES (#{discordId}, #{parentMessageId}, #{conversationId}, NOW(), "N");
     </insert>
 
     <select id="selectHistory" parameterType="chat">
         SELECT DISCORD_ID,
                PARENT_MESSAGE_ID,
+               CONVERSATION_ID,
                DELETE_FLG
         FROM nb_history a
         WHERE a.DISCORD_ID = #{discordId}
