@@ -2,7 +2,7 @@ import {ChatGPTAPI} from 'chatgpt';
 import discord from './config/discord.mjs'
 import fetch from 'node-fetch';
 import log4js from './config/log4js.mjs';
-
+import { KeyvFile } from 'keyv-file';
 import { ChatGPTClient } from '@waylaidwanderer/chatgpt-api';
 
 
@@ -29,6 +29,14 @@ const api_old = new ChatGPTAPI({
 
 });
 
+const cacheOptions = {
+    // Options for the Keyv cache, see https://www.npmjs.com/package/keyv
+    // This is used for storing conversations, and supports additional drivers (conversations are stored in memory by default)
+    // For example, to use a JSON file (`npm i keyv-file`) as a database:
+    store: new KeyvFile({ filename: './cache.json' }),
+};
+
+
 const clientOptions = {
     // (Optional) Support for a reverse proxy for the completions endpoint (private API server).
     // Warning: This will expose your `openaiApiKey` to a third party. Consider the risks before using this.
@@ -39,7 +47,7 @@ const clientOptions = {
         model: 'gpt-3.5-turbo',
         // I'm overriding the temperature to 0 here for demonstration purposes, but you shouldn't need to override this
         // for normal usage.
-        temperature: 0.5,
+        temperature: 0,
         // Set max_tokens here to override the default max_tokens of 1000 for the completion.
         // max_tokens: 1000,
     },
@@ -58,7 +66,7 @@ const clientOptions = {
     debug: false,
 };
 
-const api = new ChatGPTClient(process.env.OPENAI_API_KEY, clientOptions);
+const api = new ChatGPTClient(process.env.OPENAI_API_KEY, clientOptions, cacheOptions);
 
 
 discord.client.on('messageCreate', async (msg) => {
@@ -208,6 +216,8 @@ async function handleSendMessage(msg) {
 }
 
 async function handleSendMessageSession(msg, conversationId, parentMessageId) {
+    logger.info("conversationId :: " + conversationId);
+    logger.info("parentMessageId :: " + parentMessageId);
 
     return await api.sendMessage(msg, {
         conversationId: conversationId,

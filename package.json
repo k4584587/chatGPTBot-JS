@@ -16,6 +16,7 @@
     "discord.js": "^13.13.1",
     "dotenv": "^16.0.3",
     "fs": "^0.0.1-security",
+    "keyv-file": "^0.2.0",
     "log4js": "^6.8.0",
     "logger": "^0.0.1",
     "mybatis-mapper": "^0.6.8",
