@@ -232,10 +232,10 @@ chalk@^5.0.0:
   resolved "https://registry.yarnpkg.com/chalk/-/chalk-5.2.0.tgz#249623b7d66869c673699fb66d65723e54dfcfb3"
   integrity sha512-ree3Gqw/nazQAPuJJEy+avdl7QfZMcUvmHIKgEZkGL+xOBzRvup5Hxo6LHuMceSxOabuJLJm5Yp/92R9eMmMvA==
 
-chatgpt@^5.0.8:
-  version "5.0.8"
-  resolved "https://registry.yarnpkg.com/chatgpt/-/chatgpt-5.0.8.tgz#a21ec65354fb6cf7bbe4885cffdcbe69d7c37958"
-  integrity sha512-Bjh7Y15QIsZ+SkQvbbZGymv1PGxkZ7X1vwqAwvyqaMMhbipU4kxht/GL62VCxhoUCXPwxTfScbFeNFtNldgqaw==
+chatgpt@^5.1.1:
+  version "5.1.1"
+  resolved "https://registry.yarnpkg.com/chatgpt/-/chatgpt-5.1.1.tgz#981dba33286cd96ec694972f3532d2d4a7850c88"
+  integrity sha512-ml1u4/KqXdAKfaRwqE0uvRTh5JoRgosstH2LF4PpsawG7MUtIzAVaE/MMEAaV02uGbOlAH4IgKI3mDHkQ0Dmlw==
   dependencies:
     "@dqbd/tiktoken" "^0.4.0"
     cac "^6.7.14"

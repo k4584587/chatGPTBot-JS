@@ -11,7 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "chatgpt": "^5.0.8",
+    "chatgpt": "^5.1.1",
     "discord.js": "^13.13.1",
     "dotenv": "^16.0.3",
     "fs": "^0.0.1-security",

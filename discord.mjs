@@ -18,16 +18,42 @@ import {
 
 const api = new ChatGPTAPI({
     apiKey: process.env.OPENAI_API_KEY,
+        completionParams: {
+        temperature: 0.5,
+        top_p: 0.8
+    },
     fetch: fetch,
-});
 
+});
 
 discord.client.on('messageCreate', async (msg) => {
 
+    //@봇 멘션으로 작동할수있게 처리
+    if (msg.mentions.has(discord.client.user.id) && !msg.author.bot) {
+
+        const content = msg.content.replace(`<@!${discord.client.user.id}>`, '').trim();
+        await callAPI(msg, content);
+
+      }
 
     if (msg.content.startsWith('!msg ')) {
 
+        await callAPI(msg, msg.content.slice(5));
+
+    } else if (msg.content.startsWith('!delete')) {
+
+        const param = {discordId: msg.author.id};
         const userMention = msg.author.toString();
+
+        await updateHistoryFlg(param);
+        await msg.channel.send(`${userMention} 님 세션이 성공적으로 삭제되었습니다.`);
+        logger.info(`${userMention} 님 세션이 성공적으로 삭제되었습니다.`);
+
+    }
+});
+
+async function callAPI(msg, chat) {
+    const userMention = msg.author.toString();
         const typingMsg = await msg.channel.send(`${userMention} ChatGPT 가 내용을 작성하는중 입니다.`);
 
         //우선 작동중인큐가 있는지 확인합니다.
@@ -48,7 +74,7 @@ discord.client.on('messageCreate', async (msg) => {
 
             const param = {
                 discordId: msg.author.id,
-                chatMsg: msg.content.slice(5),
+                chatMsg: chat,
                 discordName: msg.author.username,
             };
             let history = await selectHistory(param);
@@ -67,7 +93,7 @@ discord.client.on('messageCreate', async (msg) => {
 
                 const param2 = {
                     discordId: msg.author.id,
-                    chatMsg: msg.content.slice(5),
+                    chatMsg: chat,
                     parentMessageId: parentMessageId
                 };
 
@@ -78,7 +104,7 @@ discord.client.on('messageCreate', async (msg) => {
 
                 //호출한 사람에게 답장을 합니다.
                 await msg.reply(`${userMention}` + res.text);
-                logger.info(`User ${msg.author.username} requested message: ${msg.content.slice(5)} => ${res.text}`);
+                logger.info(`User ${msg.author.username} requested message: ${chat} => ${res.text}`);
 
                 //호출이 끝나면 작성중입니다. 메시지를 삭제합니다.
                 typingMsg.delete();
@@ -92,7 +118,7 @@ discord.client.on('messageCreate', async (msg) => {
 
                 const param = {
                     discordId: msg.author.id,
-                    chatMsg: msg.content.slice(5),
+                    chatMsg: chat,
                     discordName: msg.author.username,
                     conversationId: null,
                     parentMessageId: null
@@ -110,7 +136,7 @@ discord.client.on('messageCreate', async (msg) => {
 
                 //호출한 사람에게 답장을 합니다.
                 await msg.reply(res.text);
-                logger.info(`User ${msg.author.username} requested message: ${msg.content.slice(5)} => ${res.text}`);
+                logger.info(`User ${msg.author.username} requested message: ${chat} => ${res.text}`);
 
                 const param2 = {
                     discordId: msg.author.id,
@@ -126,18 +152,7 @@ discord.client.on('messageCreate', async (msg) => {
             }
 
         }
-
-    } else if (msg.content.startsWith('!delete')) {
-
-        const param = {discordId: msg.author.id};
-        const userMention = msg.author.toString();
-
-        await updateHistoryFlg(param);
-        await msg.channel.send(`${userMention} 님 세션이 성공적으로 삭제되었습니다.`);
-        logger.info(`${userMention} 님 세션이 성공적으로 삭제되었습니다.`);
-
-    }
-});
+}
 
 
 async function handleSendMessage(msg) {
@@ -166,4 +181,5 @@ async function handleSendMessageSession(msg, parentMessageId) {
         }
     )
 }
+
 
