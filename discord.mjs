@@ -66,7 +66,7 @@ const clientOptions = {
     debug: false,
 };
 
-const api = new ChatGPTClient(process.env.OPENAI_API_KEY, clientOptions, cacheOptions);
+const api = new ChatGPTClient(process.env.OPENAI_API_KEY, clientOptions);
 
 
 discord.client.on('messageCreate', async (msg) => {
