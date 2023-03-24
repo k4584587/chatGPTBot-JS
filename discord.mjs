@@ -4,10 +4,7 @@ import fetch from 'node-fetch';
 import log4js from './config/log4js.mjs';
 import { KeyvFile } from 'keyv-file';
 import { ChatGPTClient } from '@waylaidwanderer/chatgpt-api';
-
-
-const logger = log4js.getLogger();
-import {oraPromise} from 'ora'
+import * as schedule from 'node-schedule';
 
 import {
     selectHistory,
@@ -16,8 +13,12 @@ import {
     insertHistory,
     selectQueue,
     insertQueue,
-    updateQueue
+    updateQueue,
+    autoHistoryUpdate
 } from './mapper/chat.mjs';
+
+const logger = log4js.getLogger();
+
 
 const api_old = new ChatGPTAPI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -147,7 +148,7 @@ async function callAPI(msg, chat) {
 
             //호출한 사람에게 답장을 합니다.
             await msg.reply(`${userMention}` + res.response);
-            logger.info(`User ${msg.author.username} requested message: ${chat} => ${res.response}`);
+            //logger.info(`User ${msg.author.username} requested message: ${chat} => ${res.response}`);
 
             //호출이 끝나면 작성중입니다. 메시지를 삭제합니다.
             typingMsg.delete();
@@ -179,7 +180,7 @@ async function callAPI(msg, chat) {
 
             //호출한 사람에게 답장을 합니다.
             await msg.reply(res.response);
-            logger.info(`User ${msg.author.username} requested message: ${chat} => ${res.response}`);
+            //logger.info(`User ${msg.author.username} requested message: ${chat} => ${res.response}`);
 
             const param2 = {
                 discordId: msg.author.id,
@@ -200,19 +201,8 @@ async function callAPI(msg, chat) {
 async function handleSendMessage(msg) {
 
     return await api.sendMessage(msg, {
-        // If you want streamed responses, you can set the `onProgress` callback to receive the response as it's generated.
-        // You will receive one token at a time, so you will need to concatenate them yourself.
         onProgress: token => process.stdout.write(token)
     });
-
-    // return oraPromise(
-    //     api.sendMessage(msg.content, {
-    //         onProgress: (partialResponse) => partialResponse.text,
-    //     }),
-    //     {
-    //         text: msg.content,
-    //     }
-    // )
 }
 
 async function handleSendMessageSession(msg, conversationId, parentMessageId) {
@@ -222,20 +212,18 @@ async function handleSendMessageSession(msg, conversationId, parentMessageId) {
     return await api.sendMessage(msg, {
         conversationId: conversationId,
         parentMessageId: parentMessageId,
-        // If you want streamed responses, you can set the `onProgress` callback to receive the response as it's generated.
-        // You will receive one token at a time, so you will need to concatenate them yourself.
         onProgress: token => process.stdout.write(token)
     });
 
-    // return oraPromise(
-    //     api.sendMessage(msg.content, {
-    //         parentMessageId: parentMessageId,
-    //         onProgress: (partialResponse) => partialResponse.text,
-    //     }),
-    //     {
-    //         text: msg.content,
-    //     }
-    // )
 }
 
+//30분에 세션 기록 자동 삭제
+schedule.scheduleJob('0 */30 * * * *', async function () {
+    try {
+        logger.info("세션을 삭제 합니다...");
+        await autoHistoryUpdate();
+    } catch (error) {
+        console.error(error);
+    }
 
+});

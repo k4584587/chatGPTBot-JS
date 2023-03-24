@@ -45,3 +45,6 @@ export async function updateQueue(param) {
     await executeQuery('updateQueue', param);
 }
 
+export async function autoHistoryUpdate() {
+    await executeQuery('autoHistoryUpdate');
+}

@@ -44,4 +44,12 @@
     <update id="updateQueue" parameterType="chat">
         UPDATE nb_queue SET complete_flg = 'Y' WHERE DISCORD_ID = #{discordId};
     </update>
+
+    <update id="autoHistoryUpdate" parameterType="chat">
+        UPDATE nb_history
+        SET
+        DELETE_FLG = 'Y'
+        WHERE
+        DELETE_FLG = 'N'
+    </update>
 </mapper>
