@@ -1,42 +1,25 @@
-import {ChatGPTAPI} from 'chatgpt';
+
 import discord from './config/discord.mjs'
-import fetch from 'node-fetch';
 import log4js from './config/log4js.mjs';
-import { KeyvFile } from 'keyv-file';
 import { ChatGPTClient } from '@waylaidwanderer/chatgpt-api';
 import * as schedule from 'node-schedule';
 
 import {
-    selectHistory,
-    updateHistoryFlg,
     insertLog,
-    insertHistory,
     selectQueue,
     insertQueue,
     updateQueue,
-    autoHistoryUpdate
+    insertConversationHistory,
+    insertParentHistory,
+    selectConversationHistory,
+    updateConversationHistoryFlg,
+    autoParentHistoryFlg,
+    autoConversationHistoryFlg,
+    updateParentHistory,
+    selectParentHistory
 } from './mapper/chat.mjs';
 
 const logger = log4js.getLogger();
-
-
-const api_old = new ChatGPTAPI({
-    apiKey: process.env.OPENAI_API_KEY,
-    completionParams: {
-        temperature: 0.5,
-        top_p: 0.8
-    },
-    fetch: fetch,
-
-});
-
-const cacheOptions = {
-    // Options for the Keyv cache, see https://www.npmjs.com/package/keyv
-    // This is used for storing conversations, and supports additional drivers (conversations are stored in memory by default)
-    // For example, to use a JSON file (`npm i keyv-file`) as a database:
-    store: new KeyvFile({ filename: './cache.json' }),
-};
-
 
 const clientOptions = {
     // (Optional) Support for a reverse proxy for the completions endpoint (private API server).
@@ -66,7 +49,6 @@ const clientOptions = {
     // (Optional) Set to true to enable `console.debug()` logging
     debug: false,
 };
-
 const api = new ChatGPTClient(process.env.OPENAI_API_KEY, clientOptions);
 
 
@@ -76,7 +58,6 @@ discord.client.on('messageCreate', async (msg) => {
     if (msg.mentions.has(discord.client.user.id) && !msg.author.bot) {
         const content = msg.content.replace(`<@!${discord.client.user.id}>`, '').trim();
         await callAPI(msg, content);
-
     }
 
     if (msg.content.startsWith('!msg ')) {
@@ -85,7 +66,9 @@ discord.client.on('messageCreate', async (msg) => {
         const param = {discordId: msg.author.id};
         const userMention = msg.author.toString();
 
-        await updateHistoryFlg(param);
+        await updateConversationHistoryFlg(param);
+        await updateParentHistory(param);
+
         await msg.channel.send(`${userMention} 님 세션이 성공적으로 삭제되었습니다.`);
         logger.info(`${userMention} 님 세션이 성공적으로 삭제되었습니다.`);
     }
@@ -119,17 +102,20 @@ async function callAPI(msg, chat) {
             chatMsg: chat,
             discordName: msg.author.username,
         };
-        let history = await selectHistory(param);
+        let conversationHistory = await selectConversationHistory(param);
+        let parentHistory = await selectParentHistory(param);
         //호출한 디스코드 아이디로 chatgpt 봇 호출한적이 있는지 db에서 select 해봅니다.
 
-        if (history.length >= 1) { //세션이 존재한지 확인
+
+
+        if (conversationHistory.length >= 1) { //세션이 존재한지 확인
 
             //세션이 존재하면 이 세션으로 이어서 대화시작
             logger.info(`${userMention} 님 세션이 존재함 이 세션으로 이어서 대화합니다.`);
 
             //db에서 세션값을 가져옵니다.
-            conversationId = history[0].CONVERSATION_ID;
-            parentMessageId = history[0].PARENT_MESSAGE_ID;
+            conversationId = conversationHistory[0].CONVERSATION_ID;
+            parentMessageId = parentHistory[0].PARENT_MESSAGE_ID;
 
             //chatbot 호출전에 로그 남기는 함수를 실행합니다.
             await insertLog(param);
@@ -141,10 +127,20 @@ async function callAPI(msg, chat) {
                 parentMessageId: parentMessageId
             };
 
+
+
             //중복호출을 막기위해 큐히스토리에 저장합니다.
             await insertQueue(param2);
             //chatbot api 호출합니다.
             let res = await handleSendMessageSession(msg, conversationId, parentMessageId);
+
+            console.log("parentMessageId: " + res.messageId );
+            const param3 = {
+                discordId: msg.author.id,
+                parentMessageId: res.messageId
+            };
+
+            await insertParentHistory(param3);
 
             //호출한 사람에게 답장을 합니다.
             await msg.reply(`${userMention}` + res.response);
@@ -174,6 +170,7 @@ async function callAPI(msg, chat) {
             //중복호출을 막기위해 큐히스토리에 저장합니다.
             await insertQueue(param)
 
+
             //chatbot api 호출합니다.
             const res = await handleSendMessage(msg);
             typingMsg.delete(); //api 호출이 끝나면 작성중입니다. 내용을 삭제합니다.
@@ -189,7 +186,12 @@ async function callAPI(msg, chat) {
             };
 
             //세션을 저장합니다.
-            await insertHistory(param2);
+            await insertConversationHistory(param2);
+
+            await insertParentHistory(param2);
+
+            //세션을 저장합니다.
+            //await insertHistory(param2);
 
             //api 실행이 끝나면 큐상태를 완료상태로 변경해줍니다.
             await updateQueue(param2)
@@ -221,7 +223,8 @@ async function handleSendMessageSession(msg, conversationId, parentMessageId) {
 schedule.scheduleJob('0 */30 * * * *', async function () {
     try {
         logger.info("세션을 삭제 합니다...");
-        await autoHistoryUpdate();
+        await autoConversationHistoryFlg();
+        await autoParentHistoryFlg();
     } catch (error) {
         console.error(error);
     }

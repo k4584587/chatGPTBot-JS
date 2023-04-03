@@ -10,7 +10,7 @@
 
     <insert id="insertHistory" parameterType="chat">
         INSERT INTO nb_history (DISCORD_ID, PARENT_MESSAGE_ID, CONVERSATION_ID, CREATE_DATE, DELETE_FLG)
-        VALUES (#{discordId}, #{parentMessageId}, #{conversationId}, NOW(), "N");
+        VALUES (#{discordId}, #{parentMessageId}, #{conversationId}, NOW(), 'N');
     </insert>
 
     <select id="selectHistory" parameterType="chat">
@@ -37,7 +37,7 @@
     </select>
 
     <insert id="insertQueue" parameterType="chat">
-        INSERT INTO `nb_queue` (`discord_id`, `message`, `parent_message_id`, create_date)
+        INSERT INTO nb_queue (discord_id, message, parent_message_id, create_date)
         VALUES (#{discordId}, #{chatMsg}, #{parentMessageId}, NOW());
     </insert>
 
@@ -51,5 +51,52 @@
         DELETE_FLG = 'Y'
         WHERE
         DELETE_FLG = 'N'
+    </update>
+
+
+    <insert id="insertConversationHistory" parameterType="chat">
+        INSERT INTO nb_conversation_history
+            (CONVERSATION_ID, DISCORD_ID, CREATE_DATE, DEL_FLG)
+        VALUES (#{conversationId}, #{discordId}, NOW(), 'N');
+    </insert>
+
+    <insert id="insertParentHistory" parameterType="chat">
+        INSERT INTO nb_parent_history
+            (PARENT_MESSAGE_ID, DISCORD_ID, CREATE_DATE, DEL_FLG)
+        VALUES (#{parentMessageId}, #{discordId}, NOW(), 'N');
+    </insert>
+
+    <select id="selectConversationHistory" parameterType="chat">
+        SELECT
+            CONVERSATION_ID
+        FROM
+        nb_conversation_history a
+        WHERE
+        a.DISCORD_ID = #{discordId} AND DEL_FLG = 'N' ORDER BY CREATE_DATE DESC LIMIT 1
+    </select>
+
+    <select id="selectParentHistory" parameterType="chat">
+        SELECT
+            PARENT_MESSAGE_ID
+        FROM
+        nb_parent_history a
+        WHERE
+        a.DISCORD_ID = #{discordId} AND DEL_FLG = 'N' ORDER BY CREATE_DATE DESC LIMIT 1
+    </select>
+
+    <update id="updateConversationHistoryFlg" parameterType="chat">
+        UPDATE nb_conversation_history SET DEL_FLG = 'Y' WHERE  DISCORD_ID = #{discordId};
+    </update>
+
+    <update id="updateParentHistory" parameterType="chat">
+        UPDATE nb_parent_history SET DEL_FLG = 'Y' WHERE  DISCORD_ID = #{discordId};
+    </update>
+
+    <update id="autoConversationHistoryFlg" parameterType="chat">
+        UPDATE nb_conversation_history SET DEL_FLG = 'Y' WHERE DEL_FLG = 'N';
+    </update>
+
+    <update id="autoParentHistoryFlg" parameterType="chat">
+        UPDATE nb_parent_history SET DEL_FLG = 'Y' WHERE DEL_FLG = 'N';
     </update>
 </mapper>
