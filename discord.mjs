@@ -56,7 +56,10 @@ discord.client.on('messageCreate', async (msg) => {
 
     //@봇 멘션으로 작동할수있게 처리
     if (msg.mentions.has(discord.client.user.id) && !msg.author.bot) {
-        const content = msg.content.replace(`<@!${discord.client.user.id}>`, '').trim();
+        //const content = msg.content.replace(`<@!${discord.client.user.id}>`, '').trim();
+        const content = msg.content.replace(`<@${discord.client.user.id}>`, '').trim();
+
+        logger.info(`msg : ${content}`)
         await callAPI(msg, content);
     }
 
