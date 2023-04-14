@@ -1,5 +1,5 @@
 
-import discord from './config/discord.mjs'
+import  discord from './config/discord.mjs'
 import log4js from './config/log4js.mjs';
 import { ChatGPTClient } from '@waylaidwanderer/chatgpt-api';
 import * as schedule from 'node-schedule';
@@ -56,7 +56,7 @@ discord.client.on('messageCreate', async (msg) => {
 
     //@봇 멘션으로 작동할수있게 처리
     if (msg.mentions.has(discord.client.user.id) && !msg.author.bot) {
-        const content = msg.content.replace(`<@!${discord.client.user.id}>`, '').trim();
+        const content = msg.content.replace('<@1062228838521786408>', '').trim();
         await callAPI(msg, content);
     }
 
@@ -99,7 +99,7 @@ async function callAPI(msg, chat) {
 
         const param = {
             discordId: msg.author.id,
-            chatMsg: chat,
+            chatMsg: `<@!${msg.author.id}> ${chat}`,
             discordName: msg.author.username,
         };
         let conversationHistory = await selectConversationHistory(param);
@@ -122,7 +122,7 @@ async function callAPI(msg, chat) {
 
             const param2 = {
                 discordId: msg.author.id,
-                chatMsg: chat,
+                chatMsg: `<@!${msg.author.id}> ${chat}`,
                 conversationId: conversationId,
                 parentMessageId: parentMessageId
             };
@@ -132,7 +132,7 @@ async function callAPI(msg, chat) {
             //중복호출을 막기위해 큐히스토리에 저장합니다.
             await insertQueue(param2);
             //chatbot api 호출합니다.
-            let res = await handleSendMessageSession(msg, conversationId, parentMessageId);
+            let res = await handleSendMessageSession(`<@!${msg.author.id}> ${chat}`, conversationId, parentMessageId);
 
             console.log("parentMessageId: " + res.messageId );
             const param3 = {
@@ -158,7 +158,7 @@ async function callAPI(msg, chat) {
 
             const param = {
                 discordId: msg.author.id,
-                chatMsg: chat,
+                chatMsg: `<@!${msg.author.id}> ${chat}`,
                 discordName: msg.author.username,
                 conversationId: null,
                 parentMessageId: null
@@ -172,7 +172,7 @@ async function callAPI(msg, chat) {
 
 
             //chatbot api 호출합니다.
-            const res = await handleSendMessage(msg);
+            const res = await handleSendMessage(`<@!${msg.author.id}> ${chat}`);
             typingMsg.delete(); //api 호출이 끝나면 작성중입니다. 내용을 삭제합니다.
 
             //호출한 사람에게 답장을 합니다.
@@ -208,8 +208,6 @@ async function handleSendMessage(msg) {
 }
 
 async function handleSendMessageSession(msg, conversationId, parentMessageId) {
-    logger.info("conversationId :: " + conversationId);
-    logger.info("parentMessageId :: " + parentMessageId);
 
     return await api.sendMessage(msg, {
         conversationId: conversationId,
