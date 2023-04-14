@@ -12,10 +12,8 @@ import {
     insertConversationHistory,
     insertParentHistory,
     selectConversationHistory,
-    updateConversationHistoryFlg,
     autoParentHistoryFlg,
     autoConversationHistoryFlg,
-    updateParentHistory,
     selectParentHistory
 } from './mapper/chat.mjs';
 
@@ -28,7 +26,7 @@ const clientOptions = {
     // (Optional) Parameters as described in https://platform.openai.com/docs/api-reference/completions
     modelOptions: {
         // You can override the model name and any other parameters here, like so:
-        model: 'gpt-3.5-turbo-0301',
+        model: 'gpt-3.5',
         // I'm overriding the temperature to 0 here for demonstration purposes, but you shouldn't need to override this
         // for normal usage.
         temperature: 0,
@@ -56,22 +54,10 @@ discord.client.on('messageCreate', async (msg) => {
 
     //@봇 멘션으로 작동할수있게 처리
     if (msg.mentions.has(discord.client.user.id) && !msg.author.bot) {
-        const content = msg.content.replace('<@1062228838521786408>', '').trim();
+        const content = msg.content.replace(new RegExp(`<@!?${discord.client.user.id}>`), '').trim();
         await callAPI(msg, content);
     }
 
-    if (msg.content.startsWith('!msg ')) {
-        await callAPI(msg, msg.content.slice(5));
-    } else if (msg.content.startsWith('!delete')) {
-        const param = {discordId: msg.author.id};
-        const userMention = msg.author.toString();
-
-        await updateConversationHistoryFlg(param);
-        await updateParentHistory(param);
-
-        await msg.channel.send(`${userMention} 님 세션이 성공적으로 삭제되었습니다.`);
-        logger.info(`${userMention} 님 세션이 성공적으로 삭제되었습니다.`);
-    }
 });
 
 async function callAPI(msg, chat) {
@@ -99,7 +85,7 @@ async function callAPI(msg, chat) {
 
         const param = {
             discordId: msg.author.id,
-            chatMsg: `<@!${msg.author.id}> ${chat}`,
+            chatMsg: `<@${msg.author.id}> ${chat}`,
             discordName: msg.author.username,
         };
         let conversationHistory = await selectConversationHistory(param);
@@ -122,7 +108,7 @@ async function callAPI(msg, chat) {
 
             const param2 = {
                 discordId: msg.author.id,
-                chatMsg: `<@!${msg.author.id}> ${chat}`,
+                chatMsg: `<@${msg.author.id}> ${chat}`,
                 conversationId: conversationId,
                 parentMessageId: parentMessageId
             };
@@ -132,7 +118,7 @@ async function callAPI(msg, chat) {
             //중복호출을 막기위해 큐히스토리에 저장합니다.
             await insertQueue(param2);
             //chatbot api 호출합니다.
-            let res = await handleSendMessageSession(`<@!${msg.author.id}> ${chat}`, conversationId, parentMessageId);
+            let res = await handleSendMessageSession(`<@${msg.author.id}> ${chat}`, conversationId, parentMessageId);
 
             console.log("parentMessageId: " + res.messageId );
             const param3 = {
@@ -158,7 +144,7 @@ async function callAPI(msg, chat) {
 
             const param = {
                 discordId: msg.author.id,
-                chatMsg: `<@!${msg.author.id}> ${chat}`,
+                chatMsg: `<@${msg.author.id}> ${chat}`,
                 discordName: msg.author.username,
                 conversationId: null,
                 parentMessageId: null
@@ -172,7 +158,7 @@ async function callAPI(msg, chat) {
 
 
             //chatbot api 호출합니다.
-            const res = await handleSendMessage(`<@!${msg.author.id}> ${chat}`);
+            const res = await handleSendMessage(`<@${msg.author.id}> ${chat}`);
             typingMsg.delete(); //api 호출이 끝나면 작성중입니다. 내용을 삭제합니다.
 
             //호출한 사람에게 답장을 합니다.
