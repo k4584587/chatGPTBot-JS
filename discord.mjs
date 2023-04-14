@@ -58,6 +58,18 @@ discord.client.on('messageCreate', async (msg) => {
         await callAPI(msg, content);
     }
 
+
+   if (msg.content.startsWith('!delete')) {
+        const param = {discordId: msg.author.id};
+        const userMention = msg.author.toString();
+
+        await updateConversationHistoryFlg(param);
+        await updateParentHistory(param);
+
+        await msg.channel.send(`${userMention} 님 세션이 성공적으로 삭제되었습니다.`);
+        logger.info(`${userMention} 님 세션이 성공적으로 삭제되었습니다.`);
+    }
+
 });
 
 async function callAPI(msg, chat) {
