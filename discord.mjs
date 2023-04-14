@@ -14,7 +14,7 @@ import {
     selectConversationHistory,
     autoParentHistoryFlg,
     autoConversationHistoryFlg,
-    selectParentHistory
+    selectParentHistory, updateConversationHistoryFlg, updateParentHistory
 } from './mapper/chat.mjs';
 
 const logger = log4js.getLogger();
