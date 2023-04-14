@@ -26,7 +26,7 @@ const clientOptions = {
     // (Optional) Parameters as described in https://platform.openai.com/docs/api-reference/completions
     modelOptions: {
         // You can override the model name and any other parameters here, like so:
-        model: 'gpt-3.5',
+        model: 'gpt-3.5-turbo',
         // I'm overriding the temperature to 0 here for demonstration purposes, but you shouldn't need to override this
         // for normal usage.
         temperature: 0,
