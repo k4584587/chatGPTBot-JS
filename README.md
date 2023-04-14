@@ -45,26 +45,20 @@
 6. 그리고 mysql 서버에 ddl 쿼리를 import 해줍니다.  
 7. 마지막으로 docker-compose up --build 로 빌드합니다.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
 <!-- USAGE EXAMPLES -->
 ## 사용방법
   ```
   !msg 내용
   !delete (명령으로 세션을 초기화 할수있습니다.)
   ```
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- ROADMAP -->
 ## 로드맵
-- [ ] 대기열 기능 추가하기
+- [x] 대화 이어하기 안되는 버그 수정
 - [x] 사용 안할때 자동으로 세션 삭제하는 기능 추가하기 (스켸줄 기능)
 
 아직 미완성 봇이라 불안정할수 있습니다.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- 사용된 라이브러리 -->
 ## 사용된 라이브러리
@@ -72,4 +66,3 @@
 * [chatgpt-api](https://github.com/transitive-bullshit/chatgpt-api)
 * [Discord.js](https://github.com/discordjs/discord.js)
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
