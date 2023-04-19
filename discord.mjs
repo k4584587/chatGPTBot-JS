@@ -141,7 +141,7 @@ async function callAPI(msg, chat) {
             await insertParentHistory(param3);
 
             //호출한 사람에게 답장을 합니다.
-            await msg.reply(`${userMention}` + res.response);
+            await msg.reply(`${userMention}` + " " + res.response);
             //logger.info(`User ${msg.author.username} requested message: ${chat} => ${res.response}`);
 
             //호출이 끝나면 작성중입니다. 메시지를 삭제합니다.
@@ -174,7 +174,7 @@ async function callAPI(msg, chat) {
             typingMsg.delete(); //api 호출이 끝나면 작성중입니다. 내용을 삭제합니다.
 
             //호출한 사람에게 답장을 합니다.
-            await msg.reply(res.response);
+            await msg.reply(`${userMention}` + " " + res.response);
             //logger.info(`User ${msg.author.username} requested message: ${chat} => ${res.response}`);
 
             const param2 = {
