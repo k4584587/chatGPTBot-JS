@@ -55,19 +55,6 @@ const api = new ChatGPTClient(process.env.OPENAI_API_KEY, clientOptions);
 
 discord.client.on('messageCreate', async (msg) => {
 
-    // Add this code to handle !test command
-    if (msg.content.startsWith('!test') && !msg.author.bot) {
-        try {
-            testSplitMessage();
-            await msg.channel.send('splitMessage 테스트가 성공적으로 완료되었습니다.');
-            logger.info('splitMessage 테스트가 성공적으로 완료되었습니다.');
-        } catch (error) {
-            await msg.channel.send('splitMessage 테스트에 실패했습니다: ' + error.message);
-            logger.error('splitMessage 테스트에 실패했습니다: ' + error.message);
-        }
-    }
-
-
     //@봇 멘션으로 작동할수있게 처리
     if (msg.mentions.has(discord.client.user.id) && !msg.author.bot) {
         const content = msg.content.replace(new RegExp(`<@!?${discord.client.user.id}>`), '').trim();
