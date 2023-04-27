@@ -1,8 +1,9 @@
-
-import  discord from './config/discord.mjs'
+import discord from './config/discord.mjs'
 import log4js from './config/log4js.mjs';
-import { ChatGPTClient } from '@waylaidwanderer/chatgpt-api';
+import {ChatGPTClient} from '@waylaidwanderer/chatgpt-api';
 import * as schedule from 'node-schedule';
+import assert from 'assert';
+
 
 import {
     insertLog,
@@ -18,6 +19,8 @@ import {
 } from './mapper/chat.mjs';
 
 const logger = log4js.getLogger();
+
+const MAX_MESSAGE_LENGTH = 2000; // Maximum length of a Discord message
 
 const clientOptions = {
     // (Optional) Support for a reverse proxy for the completions endpoint (private API server).
@@ -52,6 +55,19 @@ const api = new ChatGPTClient(process.env.OPENAI_API_KEY, clientOptions);
 
 discord.client.on('messageCreate', async (msg) => {
 
+    // Add this code to handle !test command
+    if (msg.content.startsWith('!test') && !msg.author.bot) {
+        try {
+            testSplitMessage();
+            await msg.channel.send('splitMessage 테스트가 성공적으로 완료되었습니다.');
+            logger.info('splitMessage 테스트가 성공적으로 완료되었습니다.');
+        } catch (error) {
+            await msg.channel.send('splitMessage 테스트에 실패했습니다: ' + error.message);
+            logger.error('splitMessage 테스트에 실패했습니다: ' + error.message);
+        }
+    }
+
+
     //@봇 멘션으로 작동할수있게 처리
     if (msg.mentions.has(discord.client.user.id) && !msg.author.bot) {
         const content = msg.content.replace(new RegExp(`<@!?${discord.client.user.id}>`), '').trim();
@@ -59,7 +75,7 @@ discord.client.on('messageCreate', async (msg) => {
     }
 
 
-   if (msg.content.startsWith('!delete')) {
+    if (msg.content.startsWith('!delete')) {
         const param = {discordId: msg.author.id};
         const userMention = msg.author.toString();
 
@@ -105,7 +121,6 @@ async function callAPI(msg, chat) {
         //호출한 디스코드 아이디로 chatgpt 봇 호출한적이 있는지 db에서 select 해봅니다.
 
 
-
         if (conversationHistory.length >= 1) { //세션이 존재한지 확인
 
             //세션이 존재하면 이 세션으로 이어서 대화시작
@@ -126,13 +141,14 @@ async function callAPI(msg, chat) {
             };
 
 
-
             //중복호출을 막기위해 큐히스토리에 저장합니다.
             await insertQueue(param2);
             //chatbot api 호출합니다.
             let res = await handleSendMessageSession(`<@${msg.author.id}> ${chat}`, conversationId, parentMessageId);
 
-            console.log("parentMessageId: " + res.messageId );
+            const response = res.response;
+
+            console.log("\nparentMessageId: " + res.messageId);
             const param3 = {
                 discordId: msg.author.id,
                 parentMessageId: res.messageId
@@ -141,7 +157,17 @@ async function callAPI(msg, chat) {
             await insertParentHistory(param3);
 
             //호출한 사람에게 답장을 합니다.
-            await msg.reply(`${userMention}` + " " + res.response);
+            if (response.length <= MAX_MESSAGE_LENGTH) {
+                // If the response is within the limit, send it as a single message
+                await msg.reply(" " + response);
+            } else {
+                // If the response exceeds the limit, split it into multiple messages
+                const chunks = splitMessage(response, MAX_MESSAGE_LENGTH);
+                for (const chunk of chunks) {
+                    await msg.reply(" " + chunk);
+                }
+            }
+
             //logger.info(`User ${msg.author.username} requested message: ${chat} => ${res.response}`);
 
             //호출이 끝나면 작성중입니다. 메시지를 삭제합니다.
@@ -174,12 +200,12 @@ async function callAPI(msg, chat) {
             typingMsg.delete(); //api 호출이 끝나면 작성중입니다. 내용을 삭제합니다.
 
             //호출한 사람에게 답장을 합니다.
-            await msg.reply(`${userMention}` + " " + res.response);
+            await msg.reply(" " + res.response);
             //logger.info(`User ${msg.author.username} requested message: ${chat} => ${res.response}`);
 
             const param2 = {
                 discordId: msg.author.id,
-                conversationId:  res.conversationId,
+                conversationId: res.conversationId,
                 parentMessageId: res.messageId,
             };
 
@@ -198,20 +224,80 @@ async function callAPI(msg, chat) {
     }
 }
 
-async function handleSendMessage(msg) {
+// Function to split a long message into multiple chunks
+function splitMessage(message, maxLength) {
+    const chunks = [];
+    let currentChunk = "";
 
+    for (const word of message.split(" ")) {
+        if (currentChunk.length + word.length + 1 > maxLength) {
+            if (currentChunk.length > 0) {
+                chunks.push(currentChunk);
+            }
+            currentChunk = word;
+        } else {
+            if (currentChunk.length > 0) {
+                currentChunk += " ";
+            }
+            currentChunk += word;
+        }
+    }
+
+    if (currentChunk.length > 0) {
+        chunks.push(currentChunk);
+    }
+
+    return chunks;
+}
+!
+
+async function handleSendMessage(msg) {
+  try {
     return await api.sendMessage(msg, {
-        onProgress: token => process.stdout.write(token)
+      onProgress: token => process.stdout.write(token)
     });
+  } catch (error) {
+    if (error.message.includes('Prompt is too long')) {
+      const nextMsg = msg.slice(3071); // 다음 문장을 준비합니다. 3071은 최대 토큰 길이입니다.
+      return await handleSendMessage(nextMsg); // 다음 문장으로 재귀 호출합니다.
+    } else {
+      throw error; // 다른 종류의 오류는 그대로 throw합니다.
+    }
+  }
 }
 
 async function handleSendMessageSession(msg, conversationId, parentMessageId) {
-
+  try {
     return await api.sendMessage(msg, {
-        conversationId: conversationId,
-        parentMessageId: parentMessageId,
-        onProgress: token => process.stdout.write(token)
+      conversationId: conversationId,
+      parentMessageId: parentMessageId,
+      onProgress: token => "\n" + process.stdout.write(token)
     });
+  } catch (error) {
+    if (error.message.includes('Prompt is too long')) {
+      const nextMsg = msg.slice(3071); // 다음 문장을 준비합니다. 3071은 최대 토큰 길이입니다.
+      return await handleSendMessageSession(nextMsg, conversationId, parentMessageId); // 다음 문장으로 재귀 호출합니다.
+    } else {
+      throw error; // 다른 종류의 오류는 그대로 throw합니다.
+    }
+  }
+}
+
+// Test splitMessage function
+function testSplitMessage() {
+    // Test case 1: Long message that requires splitting
+    const longMessage = 'A'.repeat(MAX_MESSAGE_LENGTH + 10);
+    const chunks = splitMessage(longMessage, MAX_MESSAGE_LENGTH);
+
+    assert.strictEqual(chunks.length, 2, 'Test case 1: Expected two chunks');
+    assert.strictEqual(chunks[0].length, MAX_MESSAGE_LENGTH, `Test case 1: Expected first chunk length to be ${MAX_MESSAGE_LENGTH}`);
+    assert.strictEqual(chunks[1].length, 10, 'Test case 1: Expected second chunk length to be 10');
+
+    // Test case 2: Short message that does not require splitting
+    const shortMessage = 'Hello, world!';
+    const shortChunks = splitMessage(shortMessage, MAX_MESSAGE_LENGTH);
+
+    assert.strictEqual(shortChunks.length, 1, 'Test case 2: Expected one chunk for a short message');
 
 }
 
@@ -224,5 +310,6 @@ schedule.scheduleJob('0 */30 * * * *', async function () {
     } catch (error) {
         console.error(error);
     }
+
 
 });
