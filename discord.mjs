@@ -1,7 +1,6 @@
-
-import  discord from './config/discord.mjs'
+import discord from './config/discord.mjs'
 import log4js from './config/log4js.mjs';
-import { ChatGPTClient } from '@waylaidwanderer/chatgpt-api';
+import {ChatGPTClient} from '@waylaidwanderer/chatgpt-api';
 import * as schedule from 'node-schedule';
 
 import {
@@ -59,7 +58,7 @@ discord.client.on('messageCreate', async (msg) => {
     }
 
 
-   if (msg.content.startsWith('!delete')) {
+    if (msg.content.startsWith('!delete')) {
         const param = {discordId: msg.author.id};
         const userMention = msg.author.toString();
 
@@ -105,96 +104,110 @@ async function callAPI(msg, chat) {
         //호출한 디스코드 아이디로 chatgpt 봇 호출한적이 있는지 db에서 select 해봅니다.
 
 
+        try {
 
-        if (conversationHistory.length >= 1) { //세션이 존재한지 확인
+            if (conversationHistory.length >= 1) { //세션이 존재한지 확인
 
-            //세션이 존재하면 이 세션으로 이어서 대화시작
-            logger.info(`${userMention} 님 세션이 존재함 이 세션으로 이어서 대화합니다.`);
+                //세션이 존재하면 이 세션으로 이어서 대화시작
+                logger.info(`${userMention} 님 세션이 존재함 이 세션으로 이어서 대화합니다.`);
 
-            //db에서 세션값을 가져옵니다.
-            conversationId = conversationHistory[0].CONVERSATION_ID;
-            parentMessageId = parentHistory[0].PARENT_MESSAGE_ID;
+                //db에서 세션값을 가져옵니다.
+                conversationId = conversationHistory[0].CONVERSATION_ID;
+                parentMessageId = parentHistory[0].PARENT_MESSAGE_ID;
 
-            //chatbot 호출전에 로그 남기는 함수를 실행합니다.
-            await insertLog(param);
+                //chatbot 호출전에 로그 남기는 함수를 실행합니다.
+                await insertLog(param);
 
-            const param2 = {
-                discordId: msg.author.id,
-                chatMsg: `<@${msg.author.id}> ${chat}`,
-                conversationId: conversationId,
-                parentMessageId: parentMessageId
-            };
-
-
-
-            //중복호출을 막기위해 큐히스토리에 저장합니다.
-            await insertQueue(param2);
-            //chatbot api 호출합니다.
-            let res = await handleSendMessageSession(`<@${msg.author.id}> ${chat}`, conversationId, parentMessageId);
-
-            console.log("parentMessageId: " + res.messageId );
-            const param3 = {
-                discordId: msg.author.id,
-                parentMessageId: res.messageId
-            };
-
-            await insertParentHistory(param3);
-
-            //호출한 사람에게 답장을 합니다.
-            await msg.reply(`${userMention}` + " " + res.response);
-            //logger.info(`User ${msg.author.username} requested message: ${chat} => ${res.response}`);
-
-            //호출이 끝나면 작성중입니다. 메시지를 삭제합니다.
-            typingMsg.delete();
-
-            //api 호출이 끝나면 큐상태를 완료로 만들어줍니다.
-            await updateQueue(param2);
-
-        } else {
-
-            logger.info(`${userMention} 님 세션이 없음 새로운 세션을 생성합니다.`);
-
-            const param = {
-                discordId: msg.author.id,
-                chatMsg: `<@${msg.author.id}> ${chat}`,
-                discordName: msg.author.username,
-                conversationId: null,
-                parentMessageId: null
-            };
-
-            //chatbot 호출전에 로그 남기는 함수를 실행합니다.
-            await insertLog(param);
-
-            //중복호출을 막기위해 큐히스토리에 저장합니다.
-            await insertQueue(param)
+                const param2 = {
+                    discordId: msg.author.id,
+                    chatMsg: `<@${msg.author.id}> ${chat}`,
+                    conversationId: conversationId,
+                    parentMessageId: parentMessageId
+                };
 
 
-            //chatbot api 호출합니다.
-            const res = await handleSendMessage(`<@${msg.author.id}> ${chat}`);
-            typingMsg.delete(); //api 호출이 끝나면 작성중입니다. 내용을 삭제합니다.
+                //중복호출을 막기위해 큐히스토리에 저장합니다.
+                await insertQueue(param2);
+                //chatbot api 호출합니다.
+                let res = await handleSendMessageSession(`<@${msg.author.id}> ${chat}`, conversationId, parentMessageId);
 
-            //호출한 사람에게 답장을 합니다.
-            await msg.reply(`${userMention}` + " " + res.response);
-            //logger.info(`User ${msg.author.username} requested message: ${chat} => ${res.response}`);
+                console.log("parentMessageId: " + res.messageId);
+                const param3 = {
+                    discordId: msg.author.id,
+                    parentMessageId: res.messageId
+                };
 
-            const param2 = {
-                discordId: msg.author.id,
-                conversationId:  res.conversationId,
-                parentMessageId: res.messageId,
-            };
+                await insertParentHistory(param3);
 
-            //세션을 저장합니다.
-            await insertConversationHistory(param2);
+                //호출한 사람에게 답장을 합니다.
+                await msg.reply(`${userMention}` + " " + res.response);
+                //logger.info(`User ${msg.author.username} requested message: ${chat} => ${res.response}`);
 
-            await insertParentHistory(param2);
+                //호출이 끝나면 작성중입니다. 메시지를 삭제합니다.
+                typingMsg.delete();
 
-            //세션을 저장합니다.
-            //await insertHistory(param2);
+                //api 호출이 끝나면 큐상태를 완료로 만들어줍니다.
+                await updateQueue(param2);
 
-            //api 실행이 끝나면 큐상태를 완료상태로 변경해줍니다.
-            await updateQueue(param2)
+            } else {
+
+                logger.info(`${userMention} 님 세션이 없음 새로운 세션을 생성합니다.`);
+
+                const param = {
+                    discordId: msg.author.id,
+                    chatMsg: `<@${msg.author.id}> ${chat}`,
+                    discordName: msg.author.username,
+                    conversationId: null,
+                    parentMessageId: null
+                };
+
+                //chatbot 호출전에 로그 남기는 함수를 실행합니다.
+                await insertLog(param);
+
+                //중복호출을 막기위해 큐히스토리에 저장합니다.
+                await insertQueue(param)
+
+
+                //chatbot api 호출합니다.
+                const res = await handleSendMessage(`<@${msg.author.id}> ${chat}`);
+                typingMsg.delete(); //api 호출이 끝나면 작성중입니다. 내용을 삭제합니다.
+
+                //호출한 사람에게 답장을 합니다.
+                await msg.reply(`${userMention}` + " " + res.response);
+                //logger.info(`User ${msg.author.username} requested message: ${chat} => ${res.response}`);
+
+                const param2 = {
+                    discordId: msg.author.id,
+                    conversationId: res.conversationId,
+                    parentMessageId: res.messageId,
+                };
+
+                //세션을 저장합니다.
+                await insertConversationHistory(param2);
+
+                await insertParentHistory(param2);
+
+                //세션을 저장합니다.
+                //await insertHistory(param2);
+
+                //api 실행이 끝나면 큐상태를 완료상태로 변경해줍니다.
+                await updateQueue(param2)
+
+            }
+
+        } catch (err) {
+
+            if (err.response && err.response.status === 400 && err.response.data && err.response.data.error && err.response.data.error.includes("maximum tokens")) {
+                logger.info(`User ${msg.author.username} requested message: ${chat} => Message exceeds the maximum number of tokens allowed by the API.`);
+                await msg.reply(`${userMention} 입력하신 메시지가 API에서 허용하는 최대 토큰 수를 초과하였습니다. 더 짧은 메시지로 다시 시도해주세요. \n Your message exceeds the maximum number of tokens allowed by the API. Please try again with a shorter message.`);
+            } else {
+                logger.error(err);
+                await msg.reply(`${userMention} 입력하신 메시지가 API에서 허용하는 최대 토큰 수를 초과하였습니다. 더 짧은 메시지로 다시 시도해주세요. \n Your message exceeds the maximum number of tokens allowed by the API. Please try again with a shorter message.`);
+            }
 
         }
+
+
     }
 }
 
