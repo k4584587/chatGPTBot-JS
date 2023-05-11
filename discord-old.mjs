@@ -3,6 +3,8 @@ import log4js from './config/log4js.mjs';
 import {ChatGPTClient} from '@waylaidwanderer/chatgpt-api';
 import * as schedule from 'node-schedule';
 
+
+
 import {
     insertLog,
     selectQueue,
@@ -15,6 +17,9 @@ import {
     autoConversationHistoryFlg,
     selectParentHistory, updateConversationHistoryFlg, updateParentHistory
 } from './mapper/chat.mjs';
+import {MessageAttachment} from "discord.js";
+import fs from 'fs/promises';
+import fetch from 'node-fetch';
 
 const logger = log4js.getLogger();
 
@@ -67,6 +72,29 @@ discord.client.on('messageCreate', async (msg) => {
 
         await msg.channel.send(`${userMention} 님 세션이 성공적으로 삭제되었습니다.`);
         logger.info(`${userMention} 님 세션이 성공적으로 삭제되었습니다.`);
+    }
+
+    if (msg.content === '!sendFile') {
+        logger.info("호출함")
+        // API에서 가져온 긴 텍스트
+        const text = await fetch('https://jsonplaceholder.typicode.com/posts/1')
+            .then(res => res.json())
+            .then(data => data.body);
+
+        const fileName = 'longText.txt';
+
+        await fs.writeFile(fileName, "test.txt", 'utf-8');
+
+        // 파일을 메시지에 첨부하십시오
+        const attachment = new MessageAttachment(fileName);
+
+        msg.channel.send({ content: text, files: [attachment] });
+
+        // 파일을 삭제하십시오 (선택 사항)
+        await fs.unlink(fileName);
+
+
+        logger.info(text);
     }
 
 });

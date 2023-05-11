@@ -5,20 +5,24 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon --trace-deprecation --experimental-modules discord.mjs",
-    "dev": "nodemon --trace-deprecation --experimental-modules discord.mjs"
+    "start": "nodemon --trace-deprecation --experimental-modules discord.js",
+    "dev": "nodemon --trace-deprecation --experimental-modules discord.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@discordjs/builders": "^1.6.3",
+    "@discordjs/rest": "^1.7.1",
     "@waylaidwanderer/chatgpt-api": "^1.30.0",
     "chatgpt": "^5.2.2",
+    "discord-api-types": "^0.37.42",
     "discord.js": "^13.13.1",
     "dotenv": "^16.0.3",
-    "fs": "^0.0.1-security",
+    "fs": "^0.0.2",
     "keyv-file": "^0.2.0",
     "log4js": "^6.8.0",
     "logger": "^0.0.1",
+    "moment": "^2.29.4",
     "mybatis-mapper": "^0.6.8",
     "mysql2": "^3.1.2",
     "node-fetch": "^3.3.0",
