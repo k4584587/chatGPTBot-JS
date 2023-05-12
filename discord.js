@@ -6,6 +6,9 @@ const moment = require("moment");
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 
+const log4js = require('./config/log4js.js');
+const logger = log4js.getLogger();
+
 let token = config.token
 
 client.commands = new Collection()
@@ -13,8 +16,6 @@ client.slashcommands = new Collection()
 client.commandaliases = new Collection()
 
 const rest = new REST({ version: '9' }).setToken(token);
-
-const log = x => { console.log(`[${moment().format("DD-MM-YYYY HH:mm:ss")}] ${x}`) };
 
 //command-handler
 const commands = []
@@ -46,7 +47,7 @@ client.on("ready", async () => {
         } catch (error) {
             console.error(error);
         }
-    log(`${client.user.username} Aktif Edildi!`);
+    logger.info(`${client.user.username} Login!`);
 })
 
 //event-handler

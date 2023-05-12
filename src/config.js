@@ -1,5 +1,7 @@
+const dotenv= require ('dotenv');
+dotenv.config();
+
 module.exports = {
   prefix: "!",
-  owner: "690639157013381220",
-  token: "",
+  token: process.env.DISCORD_BOT_TOKEN,
 }

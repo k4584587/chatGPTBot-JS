@@ -1,4 +1,4 @@
-import log4js from 'log4js';
+const log4js = require('log4js');
 
 log4js.configure({
   appenders: {
@@ -9,4 +9,5 @@ log4js.configure({
     default: { appenders: ['file', 'console'], level: 'debug' },
   },
 });
-export default log4js;
+
+module.exports = log4js;
