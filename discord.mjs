@@ -25,7 +25,7 @@ const clientOptions = {
     // (Optional) Parameters as described in https://platform.openai.com/docs/api-reference/completions
     modelOptions: {
         // You can override the model name and any other parameters here, like so:
-        model: 'gpt-3.5-turbo',
+        model: 'gpt-4',
         // I'm overriding the temperature to 0 here for demonstration purposes, but you shouldn't need to override this
         // for normal usage.
         temperature: 0,
@@ -96,7 +96,7 @@ async function callAPI(msg, chat) {
 
         const param = {
             discordId: msg.author.id,
-            chatMsg: `<@${msg.author.id}> ${chat}`,
+            chatMsg: `${chat}`,
             discordName: msg.author.username,
         };
         let conversationHistory = await selectConversationHistory(param);
@@ -120,7 +120,7 @@ async function callAPI(msg, chat) {
 
                 const param2 = {
                     discordId: msg.author.id,
-                    chatMsg: `<@${msg.author.id}> ${chat}`,
+                    chatMsg: `${chat}`,
                     conversationId: conversationId,
                     parentMessageId: parentMessageId
                 };
@@ -129,7 +129,7 @@ async function callAPI(msg, chat) {
                 //중복호출을 막기위해 큐히스토리에 저장합니다.
                 await insertQueue(param2);
                 //chatbot api 호출합니다.
-                let res = await handleSendMessageSession(`<@${msg.author.id}> ${chat}`, conversationId, parentMessageId);
+                let res = await handleSendMessageSession(`${chat}`, conversationId, parentMessageId);
 
                 console.log("parentMessageId: " + res.messageId);
                 const param3 = {
@@ -155,7 +155,7 @@ async function callAPI(msg, chat) {
 
                 const param = {
                     discordId: msg.author.id,
-                    chatMsg: `<@${msg.author.id}> ${chat}`,
+                    chatMsg: `${chat}`,
                     discordName: msg.author.username,
                     conversationId: null,
                     parentMessageId: null
@@ -169,7 +169,7 @@ async function callAPI(msg, chat) {
 
 
                 //chatbot api 호출합니다.
-                const res = await handleSendMessage(`<@${msg.author.id}> ${chat}`);
+                const res = await handleSendMessage(`${chat}`);
                 typingMsg.delete(); //api 호출이 끝나면 작성중입니다. 내용을 삭제합니다.
 
                 //호출한 사람에게 답장을 합니다.
@@ -229,7 +229,8 @@ async function handleSendMessageSession(msg, conversationId, parentMessageId) {
 }
 
 //30분에 세션 기록 자동 삭제
-schedule.scheduleJob('0 */30 * * * *', async function () {
+/*
+schedule.scheduleJob('0 *!/30 * * * *', async function () {
     try {
         logger.info("세션을 삭제 합니다...");
         await autoConversationHistoryFlg();
@@ -239,3 +240,4 @@ schedule.scheduleJob('0 */30 * * * *', async function () {
     }
 
 });
+*/
