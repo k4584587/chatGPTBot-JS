@@ -51,7 +51,9 @@ const api = new ChatGPTClient(process.env.OPENAI_API_KEY, clientOptions);
 
 discord.client.on('messageCreate', async (msg) => {
 
-    //@봇 멘션으로 작동할수있게 처리
+    if (msg.content.includes('@everyone')) return;
+
+    // @봇 멘션으로 작동할 수 있게 처리
     if (msg.mentions.has(discord.client.user.id) && !msg.author.bot) {
         const content = msg.content.replace(new RegExp(`<@!?${discord.client.user.id}>`), '').trim();
         await callAPI(msg, content);
@@ -128,7 +130,17 @@ async function processMessage(msg, chat, typingMsg) {
         clearInterval(keepTyping);  // API 호출이 완료되면 "typing..." 상태를 중지합니다.
 
         await msg.reply(`${userMention} ${res.response}`);
-        typingMsg.delete();
+        try {
+            await typingMsg.delete();
+        } catch (err) {
+            if (err.code === 10008) {
+                console.log("메시지가 이미 삭제되었거나 찾을 수 없습니다.");
+            } else if (err.httpStatus === 403) {
+                console.log("봇에게 메시지 삭제 권한이 없습니다.");
+            } else {
+                console.error(err);
+            }
+        }
 
         const insertParams = {
             discordId: msg.author.id,
